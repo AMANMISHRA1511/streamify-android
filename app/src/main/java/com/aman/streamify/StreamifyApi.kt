@@ -12,18 +12,18 @@ object StreamifyApi {
     const val BASE_URL = "https://streamify-fixed.onrender.com"
 
     private val client = OkHttpClient.Builder()
-        .connectTimeout(8, TimeUnit.SECONDS)
-        .readTimeout(15, TimeUnit.SECONDS)
-        .callTimeout(20, TimeUnit.SECONDS)
+        .connectTimeout(5, TimeUnit.SECONDS)
+        .readTimeout(10, TimeUnit.SECONDS)
+        .callTimeout(12, TimeUnit.SECONDS)
         .build()
 
-    suspend fun search(query: String, provider: String = "mixed"): List<Track> =
+    suspend fun search(query: String, provider: String = "jio"): List<Track> =
         withContext(Dispatchers.IO) {
 
             val path = when (provider) {
                 "jio" -> "/api/jio-search"
                 "audius" -> "/api/audius-search"
-                else -> "/api/search"
+                else -> "/api/jio-search"
             }
 
             val url = BASE_URL + path +

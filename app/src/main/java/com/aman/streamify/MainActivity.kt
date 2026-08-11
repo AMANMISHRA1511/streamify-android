@@ -190,7 +190,7 @@ class MainActivity : ComponentActivity() {
 
                     if (q.length >= 2) {
                         searchJob = lifecycleScope.launch {
-                            delay(450)
+                            delay(600)
                             performSearch(q)
                         }
                     }
@@ -228,8 +228,8 @@ class MainActivity : ComponentActivity() {
             Triple("Bhojpuri Hits", "Pawan Singh Bhojpuri", "jio"),
             Triple("Telugu / Tollywood", "Telugu Tollywood hits", "jio"),
             Triple("Punjabi Beats", "Diljit Punjabi", "jio"),
-            Triple("Hollywood / English", "English pop", "audius"),
-            Triple("Global Pop", "global pop music", "audius")
+            Triple("Hollywood / English", "English hits", "jio"),
+            Triple("Global Pop", "international English pop hits", "jio")
         )
 
         categories.forEach { (title, query, provider) ->
@@ -312,7 +312,7 @@ class MainActivity : ComponentActivity() {
             orientation = LinearLayout.HORIZONTAL
         }
 
-        tracks.take(12).forEachIndexed { index, track ->
+        tracks.take(6).forEachIndexed { index, track ->
             row.addView(songCard(track) {
                 playQueue(tracks, index)
             })
@@ -346,13 +346,13 @@ class MainActivity : ComponentActivity() {
         val artwork = ImageView(this).apply {
             scaleType = ImageView.ScaleType.CENTER_CROP
             load(track.image) {
-                crossfade(true)
+                crossfade(false)
             }
         }
 
         card.addView(
             artwork,
-            LinearLayout.LayoutParams(dp(150), dp(150))
+            LinearLayout.LayoutParams(dp(132), dp(132))
         )
 
         card.addView(TextView(this).apply {
@@ -380,7 +380,7 @@ class MainActivity : ComponentActivity() {
 
         return card.apply {
             layoutParams = LinearLayout.LayoutParams(
-                dp(170),
+                dp(150),
                 ViewGroup.LayoutParams.WRAP_CONTENT
             ).apply {
                 marginEnd = dp(10)
@@ -588,7 +588,7 @@ class MainActivity : ComponentActivity() {
         val art = ImageView(this).apply {
             scaleType = ImageView.ScaleType.CENTER_CROP
             load(track.image) {
-                crossfade(true)
+                crossfade(false)
             }
         }
 
@@ -596,7 +596,7 @@ class MainActivity : ComponentActivity() {
             art,
             LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                dp(360)
+                dp(270)
             ).apply {
                 topMargin = dp(12)
             }
@@ -604,7 +604,7 @@ class MainActivity : ComponentActivity() {
 
         box.addView(TextView(this).apply {
             text = track.name
-            textSize = 29f
+            textSize = 24f
             setTextColor(Color.WHITE)
             setTypeface(typeface, android.graphics.Typeface.BOLD)
             setPadding(0, dp(20), 0, dp(5))
@@ -612,7 +612,7 @@ class MainActivity : ComponentActivity() {
 
         box.addView(TextView(this).apply {
             text = track.artist
-            textSize = 17f
+            textSize = 15f
             setTextColor(Color.parseColor("#9AA5B3"))
         })
 

@@ -11,8 +11,8 @@ android {
         applicationId = "com.aman.streamify"
         minSdk = 26
         targetSdk = 35
-        versionCode = 2
-        versionName = "2.0"
+        versionCode = 3
+        versionName = "3.0"
     }
 
     compileOptions {
@@ -22,6 +22,27 @@ android {
 
     kotlinOptions {
         jvmTarget = "17"
+    }
+
+    signingConfigs {
+        create("release") {
+            val keyPath = System.getenv("STREAMIFY_KEYSTORE_PATH")
+            if (!keyPath.isNullOrBlank()) {
+                storeFile = file(keyPath)
+            }
+
+            storePassword = System.getenv("STREAMIFY_KEYSTORE_PASSWORD")
+            keyAlias = System.getenv("STREAMIFY_KEY_ALIAS")
+            keyPassword = System.getenv("STREAMIFY_KEY_PASSWORD")
+        }
+    }
+
+    buildTypes {
+        getByName("release") {
+            isMinifyEnabled = false
+            isShrinkResources = false
+            signingConfig = signingConfigs.getByName("release")
+        }
     }
 
     packaging {
