@@ -15,10 +15,6 @@ android {
         versionName = "1.0"
     }
 
-    buildFeatures {
-        viewBinding = true
-    }
-
     packaging {
         resources.excludes += setOf(
             "META-INF/DEPENDENCIES",
