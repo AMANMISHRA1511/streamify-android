@@ -110,22 +110,6 @@ class MainActivity : ComponentActivity() {
         miniArtist = findViewById(R.id.miniArtist)
         miniPlay = findViewById(R.id.playButton)
 
-        dynamicIsland = findViewById(R.id.dynamicIsland)
-        islandArtwork = findViewById(R.id.islandArtwork)
-        islandTitle = findViewById(R.id.islandTitle)
-        islandArtist = findViewById(R.id.islandArtist)
-        islandPlay = findViewById(R.id.islandPlay)
-        musicLightView = findViewById(R.id.musicLightView)
-
-        val savedLight = prefs.getString("music_light_effect", "Sound Wave") ?: "Sound Wave"
-dynamicIsland.setOnClickListener { showNowPlaying() }
-        islandPlay.setOnClickListener {
-            controller?.let { if (it.isPlaying) it.pause() else it.play() }
-        }
-        findViewById<TextView>(R.id.musicLightShortcut).setOnClickListener {
-            showMusicLightDialog()
-        }
-
         findViewById<TextView>(R.id.prevButton).setOnClickListener {
             controller?.seekToPreviousMediaItem()
         }
@@ -579,10 +563,6 @@ updateMiniPlayer()
         miniTitle.text = item.mediaMetadata.title ?: "Unknown"
         miniArtist.text = item.mediaMetadata.artist ?: ""
 
-        item.mediaMetadata.artworkUri?.let {
-            miniArtwork.load(it)
-        }
-
         miniPlay.text = if (c.isPlaying) "Ⅱ" else "▶"
 }
 
@@ -729,115 +709,7 @@ updateMiniPlayer()
         )
     }
 
-    private fun showMusicLightDialog() {
-        val dialog = Dialog(this)
-        var selected =
-            prefs.getString("music_light_effect", "Sound Wave") ?: "Sound Wave"
 
-        val root = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(dp(22), dp(22), dp(22), dp(26))
-            background = GradientDrawable().apply {
-                setColor(Color.parseColor("#0B0F14"))
-                cornerRadius = dp(26).toFloat()
-                setStroke(dp(1), Color.parseColor("#29323E"))
-            }
-        }
-
-        root.addView(TextView(this).apply {
-            text = "Music Light Effect"
-            textSize = 24f
-            setTextColor(Color.WHITE)
-            setTypeface(typeface, android.graphics.Typeface.BOLD)
-        })
-
-        root.addView(TextView(this).apply {
-            text = "Animated edge lighting while Streamify is playing."
-            textSize = 14f
-            setTextColor(Color.parseColor("#99A5B3"))
-            setPadding(0, dp(6), 0, dp(18))
-        })
-
-        val buttons = mutableListOf<TextView>()
-
-        fun refresh() {
-            buttons.forEach { b ->
-                val active = b.text.toString() == selected
-                b.setTextColor(if (active) Color.BLACK else Color.WHITE)
-                b.background = GradientDrawable().apply {
-                    setColor(
-                        Color.parseColor(
-                            if (active) "#E91DFF" else "#151C25"
-                        )
-                    )
-                    cornerRadius = dp(18).toFloat()
-                    setStroke(
-                        dp(1),
-                        Color.parseColor(
-                            if (active) "#E91DFF" else "#2A3542"
-                        )
-                    )
-                }
-            }
-        }
-
-        listOf("Sound Wave", "Blue", "Green", "Shimmer").forEach { name ->
-            val b = TextView(this).apply {
-                text = name
-                textSize = 16f
-                gravity = Gravity.CENTER
-                setPadding(dp(14), dp(15), dp(14), dp(15))
-                setOnClickListener {
-                    selected = name
-                    refresh()
-                }
-            }
-            buttons += b
-            root.addView(
-                b,
-                LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
-                ).apply { bottomMargin = dp(9) }
-            )
-        }
-
-        refresh()
-
-        root.addView(
-            TextView(this).apply {
-                text = "Apply"
-                gravity = Gravity.CENTER
-                textSize = 16f
-                setTextColor(Color.BLACK)
-                setTypeface(typeface, android.graphics.Typeface.BOLD)
-                setPadding(dp(18), dp(15), dp(18), dp(15))
-                background = GradientDrawable().apply {
-                    setColor(Color.parseColor("#E91DFF"))
-                    cornerRadius = dp(24).toFloat()
-                }
-                setOnClickListener {
-                    prefs.edit()
-                        .putString("music_light_effect", selected)
-                        .putBoolean("music_light_enabled", true)
-                        .apply()
-dialog.dismiss()
-                }
-            },
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            ).apply { topMargin = dp(6) }
-        )
-
-        dialog.setContentView(root)
-        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
-        dialog.show()
-        dialog.window?.setLayout(
-            (resources.displayMetrics.widthPixels * .90f).toInt(),
-            ViewGroup.LayoutParams.WRAP_CONTENT
-        )
-    }
 
     private fun actionButton(text: String, click: () -> Unit): View =
         TextView(this).apply {
