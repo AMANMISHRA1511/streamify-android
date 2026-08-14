@@ -533,12 +533,16 @@ class MainActivity : ComponentActivity() {
                 override fun onIsPlayingChanged(isPlaying: Boolean) {
                     miniPlay.text = if (isPlaying) "Ⅱ" else "▶"
                     islandPlay.text = if (isPlaying) "Ⅱ" else "▶"
-                    musicLightView.setActive(
-                        isPlaying && prefs.getBoolean("music_light_enabled", true)
-                    )
+                    musicLightView.setActive(false)
                 }
 
                 override fun onPlaybackStateChanged(playbackState: Int) {
+                    updateMiniPlayer()
+                }
+
+                override fun onMediaMetadataChanged(
+                    mediaMetadata: androidx.media3.common.MediaMetadata
+                ) {
                     updateMiniPlayer()
                 }
             })
@@ -546,6 +550,12 @@ class MainActivity : ComponentActivity() {
             updateMiniPlayer()
 
         }, ContextCompat.getMainExecutor(this))
+    }
+
+    override fun onResume() {
+        super.onResume()
+        musicLightView.setActive(false)
+        updateMiniPlayer()
     }
 
     private fun playQueue(tracks: List<Track>, index: Int) {
@@ -591,16 +601,29 @@ class MainActivity : ComponentActivity() {
         islandArtist.text = item.mediaMetadata.artist ?: ""
         item.mediaMetadata.artworkUri?.let { islandArtwork.load(it) }
         islandPlay.text = if (c.isPlaying) "Ⅱ" else "▶"
-        musicLightView.setActive(
-            c.isPlaying && prefs.getBoolean("music_light_enabled", true)
-        )
+        musicLightView.setActive(false)
     }
 
     private fun currentTrack(): Track? {
         val c = controller ?: return null
         val index = c.currentMediaItemIndex
 
-        return currentQueue.getOrNull(index)
+        currentQueue.getOrNull(index)?.let { return it }
+
+        val item = c.currentMediaItem ?: return null
+        val metadata = item.mediaMetadata
+        val mediaId = item.mediaId
+
+        return Track(
+            id = mediaId.substringAfter(':', mediaId),
+            name = metadata.title?.toString() ?: "Unknown",
+            artist = metadata.artist?.toString().orEmpty(),
+            image = metadata.artworkUri?.toString().orEmpty(),
+            play = item.localConfiguration?.uri?.toString().orEmpty(),
+            provider = metadata.albumTitle?.toString()
+                ?.ifBlank { null }
+                ?: mediaId.substringBefore(':', "streamify")
+        )
     }
 
     private fun showNowPlaying() {
@@ -817,7 +840,7 @@ class MainActivity : ComponentActivity() {
                         .putBoolean("music_light_enabled", true)
                         .apply()
                     musicLightView.setEffect(selected)
-                    musicLightView.setActive(controller?.isPlaying == true)
+                    musicLightView.setActive(false)
                     dialog.dismiss()
                 }
             },
