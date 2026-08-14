@@ -58,12 +58,6 @@ class MainActivity : ComponentActivity() {
     private lateinit var miniArtist: TextView
     private lateinit var miniPlay: TextView
 
-    private lateinit var dynamicIsland: LinearLayout
-    private lateinit var islandArtwork: ImageView
-    private lateinit var islandTitle: TextView
-    private lateinit var islandArtist: TextView
-    private lateinit var islandPlay: TextView
-    private lateinit var musicLightView: MusicLightView
 
     private val prefs by lazy {
         getSharedPreferences("streamify", Context.MODE_PRIVATE)
@@ -124,9 +118,7 @@ class MainActivity : ComponentActivity() {
         musicLightView = findViewById(R.id.musicLightView)
 
         val savedLight = prefs.getString("music_light_effect", "Sound Wave") ?: "Sound Wave"
-        musicLightView.setEffect(savedLight)
-
-        dynamicIsland.setOnClickListener { showNowPlaying() }
+dynamicIsland.setOnClickListener { showNowPlaying() }
         islandPlay.setOnClickListener {
             controller?.let { if (it.isPlaying) it.pause() else it.play() }
         }
@@ -532,9 +524,7 @@ class MainActivity : ComponentActivity() {
 
                 override fun onIsPlayingChanged(isPlaying: Boolean) {
                     miniPlay.text = if (isPlaying) "Ⅱ" else "▶"
-                    islandPlay.text = if (isPlaying) "Ⅱ" else "▶"
-                    musicLightView.setActive(false)
-                }
+}
 
                 override fun onPlaybackStateChanged(playbackState: Int) {
                     updateMiniPlayer()
@@ -554,8 +544,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        musicLightView.setActive(false)
-        updateMiniPlayer()
+updateMiniPlayer()
     }
 
     private fun playQueue(tracks: List<Track>, index: Int) {
@@ -595,14 +584,7 @@ class MainActivity : ComponentActivity() {
         }
 
         miniPlay.text = if (c.isPlaying) "Ⅱ" else "▶"
-
-        dynamicIsland.visibility = View.VISIBLE
-        islandTitle.text = item.mediaMetadata.title ?: "Unknown"
-        islandArtist.text = item.mediaMetadata.artist ?: ""
-        item.mediaMetadata.artworkUri?.let { islandArtwork.load(it) }
-        islandPlay.text = if (c.isPlaying) "Ⅱ" else "▶"
-        musicLightView.setActive(false)
-    }
+}
 
     private fun currentTrack(): Track? {
         val c = controller ?: return null
@@ -839,9 +821,7 @@ class MainActivity : ComponentActivity() {
                         .putString("music_light_effect", selected)
                         .putBoolean("music_light_enabled", true)
                         .apply()
-                    musicLightView.setEffect(selected)
-                    musicLightView.setActive(false)
-                    dialog.dismiss()
+dialog.dismiss()
                 }
             },
             LinearLayout.LayoutParams(
