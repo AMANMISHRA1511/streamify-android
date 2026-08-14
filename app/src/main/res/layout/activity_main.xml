@@ -2,7 +2,7 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#080B10"
+    android:background="#050409"
     android:fitsSystemWindows="true">
 
     <LinearLayout
@@ -72,7 +72,7 @@
         android:elevation="24dp"
         android:gravity="center"
         android:text="✦"
-        android:textColor="#7CFF00"
+        android:textColor="#E91DFF"
         android:textSize="25sp"/>
 
     <com.aman.streamify.MusicLightView
@@ -127,7 +127,7 @@
                 android:background="@drawable/profile_circle"
                 android:gravity="center"
                 android:text="A"
-                android:textColor="#7CFF00"
+                android:textColor="#E91DFF"
                 android:textSize="18sp"
                 android:textStyle="bold"/>
         </LinearLayout>
@@ -311,7 +311,7 @@
                 android:background="@drawable/play_circle"
                 android:gravity="center"
                 android:text="▶"
-                android:textColor="#071000"
+                android:textColor="#FFFFFF"
                 android:textSize="20sp"/>
 
             <TextView
@@ -327,7 +327,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="72dp"
-            android:background="#0D1219"
+            android:background="#09080F"
             android:gravity="center"
             android:orientation="horizontal">
 
@@ -338,7 +338,7 @@
                 android:layout_weight="1"
                 android:gravity="center"
                 android:text="⌂&#10;Home"
-                android:textColor="#7CFF00"/>
+                android:textColor="#E91DFF"/>
 
             <TextView
                 android:id="@+id/navSearch"

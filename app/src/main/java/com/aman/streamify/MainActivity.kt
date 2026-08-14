@@ -163,7 +163,7 @@ class MainActivity : ComponentActivity() {
 
         fun activate(view: TextView) {
             all.forEach { it.setTextColor(Color.parseColor("#8E9AA8")) }
-            view.setTextColor(Color.parseColor("#7CFF00"))
+            view.setTextColor(Color.parseColor("#E91DFF"))
         }
 
         navHome.setOnClickListener {
@@ -276,13 +276,13 @@ class MainActivity : ComponentActivity() {
             background = GradientDrawable(
                 GradientDrawable.Orientation.TL_BR,
                 intArrayOf(
-                    Color.parseColor("#10301E"),
-                    Color.parseColor("#10161C"),
+                    Color.parseColor("#260936"),
+                    Color.parseColor("#12101A"),
                     Color.parseColor("#0B0F14")
                 )
             ).apply {
                 cornerRadius = dp(26).toFloat()
-                setStroke(dp(1), Color.parseColor("#244131"))
+                setStroke(dp(1), Color.parseColor("#652D80"))
             }
         }
 
@@ -304,11 +304,11 @@ class MainActivity : ComponentActivity() {
             text = "Search music  →"
             gravity = Gravity.CENTER
             textSize = 16f
-            setTextColor(Color.parseColor("#071000"))
+            setTextColor(Color.parseColor("#FFFFFF"))
             setTypeface(typeface, android.graphics.Typeface.BOLD)
             setPadding(dp(20), dp(13), dp(20), dp(13))
             background = GradientDrawable().apply {
-                setColor(Color.parseColor("#7CFF00"))
+                setColor(Color.parseColor("#E91DFF"))
                 cornerRadius = dp(30).toFloat()
             }
 
@@ -399,7 +399,7 @@ class MainActivity : ComponentActivity() {
         card.addView(TextView(this).apply {
             text = track.provider
             textSize = 11f
-            setTextColor(Color.parseColor("#7CFF00"))
+            setTextColor(Color.parseColor("#E91DFF"))
             setPadding(0, dp(5), 0, 0)
         })
 
@@ -492,10 +492,10 @@ class MainActivity : ComponentActivity() {
             text = "▶"
             gravity = Gravity.CENTER
             textSize = 18f
-            setTextColor(Color.parseColor("#071000"))
+            setTextColor(Color.parseColor("#FFFFFF"))
             background = GradientDrawable().apply {
                 shape = GradientDrawable.OVAL
-                setColor(Color.parseColor("#7CFF00"))
+                setColor(Color.parseColor("#E91DFF"))
             }
         }, LinearLayout.LayoutParams(dp(44), dp(44)))
 
@@ -633,7 +633,7 @@ class MainActivity : ComponentActivity() {
         val box = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(24), dp(20), dp(24), dp(28))
-            setBackgroundColor(Color.parseColor("#080B10"))
+            setBackgroundColor(Color.parseColor("#050409"))
         }
 
         val close = TextView(this).apply {
@@ -680,7 +680,7 @@ class MainActivity : ComponentActivity() {
         box.addView(TextView(this).apply {
             text = track.provider
             textSize = 13f
-            setTextColor(Color.parseColor("#7CFF00"))
+            setTextColor(Color.parseColor("#E91DFF"))
             setPadding(0, dp(8), 0, dp(18))
         })
 
@@ -785,14 +785,14 @@ class MainActivity : ComponentActivity() {
                 b.background = GradientDrawable().apply {
                     setColor(
                         Color.parseColor(
-                            if (active) "#7CFF00" else "#151C25"
+                            if (active) "#E91DFF" else "#151C25"
                         )
                     )
                     cornerRadius = dp(18).toFloat()
                     setStroke(
                         dp(1),
                         Color.parseColor(
-                            if (active) "#7CFF00" else "#2A3542"
+                            if (active) "#E91DFF" else "#2A3542"
                         )
                     )
                 }
@@ -831,7 +831,7 @@ class MainActivity : ComponentActivity() {
                 setTypeface(typeface, android.graphics.Typeface.BOLD)
                 setPadding(dp(18), dp(15), dp(18), dp(15))
                 background = GradientDrawable().apply {
-                    setColor(Color.parseColor("#7CFF00"))
+                    setColor(Color.parseColor("#E91DFF"))
                     cornerRadius = dp(24).toFloat()
                 }
                 setOnClickListener {
