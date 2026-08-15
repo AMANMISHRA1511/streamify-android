@@ -4,152 +4,247 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import org.json.JSONArray
 import org.json.JSONObject
 import java.net.URLEncoder
 import java.util.concurrent.TimeUnit
 
 object StreamifyApi {
 
-    /*
-     * Streamify backend proxies the JioSaavn-compatible catalog source.
-     * Keeping it behind one backend endpoint avoids Android CORS/API
-     * shape changes and lets full playable URLs be normalized server-side.
-     */
-    const val BASE_URL =
+    private const val DIRECT =
+        "https://streamify-catalog-aman-1kg8.onrender.com/api"
+
+    private const val APPDEPLOY =
         "https://streamify-india-5dyhat.v2.appdeploy.ai"
 
     private val client = OkHttpClient.Builder()
-        .connectTimeout(15, TimeUnit.SECONDS)
-        .readTimeout(30, TimeUnit.SECONDS)
-        .writeTimeout(20, TimeUnit.SECONDS)
-        .callTimeout(35, TimeUnit.SECONDS)
+        .connectTimeout(20, TimeUnit.SECONDS)
+        .readTimeout(35, TimeUnit.SECONDS)
+        .callTimeout(40, TimeUnit.SECONDS)
         .retryOnConnectionFailure(true)
         .build()
 
+    private fun request(url: String): String? {
+        return runCatching {
+            val req = Request.Builder()
+                .url(url)
+                .header("Accept", "application/json")
+                .header("User-Agent", "Streamify-Native/10.0")
+                .build()
+
+            client.newCall(req).execute().use { r ->
+                if (!r.isSuccessful) null
+                else r.body?.string()
+            }
+        }.getOrNull()
+    }
+
+    private fun best(arr: JSONArray?): String {
+        if (arr == null) return ""
+
+        var best = ""
+        var quality = -1
+
+        for (i in 0 until arr.length()) {
+            val x = arr.optJSONObject(i) ?: continue
+            val u = x.optString("url")
+            if (u.isBlank()) continue
+
+            val q = Regex("\\d+")
+                .find(x.optString("quality"))
+                ?.value
+                ?.toIntOrNull() ?: 0
+
+            if (q >= quality) {
+                quality = q
+                best = u
+            }
+        }
+
+        return best
+    }
+
+    private fun artists(s: JSONObject): String {
+        val arr = s
+            .optJSONObject("artists")
+            ?.optJSONArray("primary")
+            ?: return s.optString("artist", "Unknown Artist")
+
+        val out = mutableListOf<String>()
+
+        for (i in 0 until arr.length()) {
+            arr.optJSONObject(i)
+                ?.optString("name")
+                ?.takeIf { it.isNotBlank() }
+                ?.let(out::add)
+        }
+
+        return out.joinToString(", ")
+            .ifBlank { "Unknown Artist" }
+    }
+
+    private fun directTrack(
+        s: JSONObject,
+        index: Int
+    ): Track? {
+
+        val stream =
+            best(s.optJSONArray("downloadUrl"))
+                .ifBlank {
+                    best(s.optJSONArray("download_url"))
+                }
+
+        if (stream.isBlank()) return null
+
+        val image =
+            best(s.optJSONArray("image"))
+                .ifBlank {
+                    best(
+                        s.optJSONObject("album")
+                            ?.optJSONArray("image")
+                    )
+                }
+
+        return Track(
+            id = s.optString("id")
+                .ifBlank { "track-$index" },
+
+            name = s.optString("name")
+                .ifBlank { s.optString("title") }
+                .ifBlank { "Unknown Song" },
+
+            artist = artists(s),
+
+            album = s
+                .optJSONObject("album")
+                ?.optString("name")
+                .orEmpty(),
+
+            image = image,
+            play = stream,
+            language = s.optString("language").lowercase(),
+            year = s.optString("year"),
+            raw = s.toString()
+        )
+    }
+
+    private fun parseDirect(text: String): List<Track> {
+
+        val root = JSONObject(text)
+
+        val arr =
+            root.optJSONObject("data")
+                ?.optJSONArray("results")
+                ?: root.optJSONArray("data")
+                ?: root.optJSONArray("results")
+                ?: JSONArray()
+
+        val list = mutableListOf<Track>()
+
+        for (i in 0 until arr.length()) {
+            directTrack(
+                arr.optJSONObject(i) ?: continue,
+                i
+            )?.let(list::add)
+        }
+
+        return list
+    }
+
+    private fun parseAppDeploy(text: String): List<Track> {
+
+        val root = JSONObject(text)
+        val arr = root.optJSONArray("tracks") ?: JSONArray()
+
+        val list = mutableListOf<Track>()
+
+        for (i in 0 until arr.length()) {
+
+            val s = arr.optJSONObject(i) ?: continue
+            val stream = s.optString("stream")
+
+            if (stream.isBlank()) continue
+
+            list += Track(
+                id = s.optString("id")
+                    .ifBlank { "fallback-$i" },
+
+                name = s.optString("title")
+                    .ifBlank { "Unknown Song" },
+
+                artist = s.optString("artist")
+                    .ifBlank { "Unknown Artist" },
+
+                album = s.optString("album"),
+                image = s.optString("image"),
+                play = stream,
+                language = s.optString("language").lowercase(),
+                year = s.optString("year"),
+                raw = s.toString()
+            )
+        }
+
+        return list
+    }
+
     suspend fun search(
         query: String,
-        provider: String = "jio"
+        startPage: Int = 1,
+        pages: Int = 2
     ): List<Track> = withContext(Dispatchers.IO) {
 
         val q = query.trim()
+        if (q.length < 2) return@withContext emptyList()
 
-        if (q.length < 2)
-            return@withContext emptyList()
-
-        val encoded =
-            URLEncoder.encode(q, "UTF-8")
-
-        val urls = listOf(
-            "$BASE_URL/api/search?q=$encoded&page=1",
-            "$BASE_URL/api/search?q=$encoded&page=2"
-        )
-
-        val output = mutableListOf<Track>()
+        val encoded = URLEncoder.encode(q, "UTF-8")
+        val all = mutableListOf<Track>()
         val seen = mutableSetOf<String>()
 
-        for (url in urls) {
+        for (page in startPage until startPage + pages) {
 
-            try {
+            val body = request(
+                "$DIRECT/search/songs?query=$encoded&page=$page&limit=30"
+            )
 
-                val request = Request.Builder()
-                    .url(url)
-                    .header("Accept", "application/json")
-                    .header(
-                        "User-Agent",
-                        "Streamify-Android/7.0"
-                    )
-                    .build()
+            if (!body.isNullOrBlank()) {
+                runCatching {
+                    parseDirect(body)
+                }.getOrDefault(emptyList()).forEach { t ->
 
-                client.newCall(request)
-                    .execute()
-                    .use { response ->
+                    val key =
+                        "${t.name.lowercase()}|${t.artist.lowercase()}"
 
-                        if (!response.isSuccessful)
-                            return@use
-
-                        val text =
-                            response.body
-                                ?.string()
-                                .orEmpty()
-
-                        if (text.isBlank())
-                            return@use
-
-                        val root =
-                            JSONObject(text)
-
-                        val array =
-                            root.optJSONArray("tracks")
-                                ?: return@use
-
-                        for (i in 0 until array.length()) {
-
-                            val s =
-                                array.optJSONObject(i)
-                                    ?: continue
-
-                            val id =
-                                s.optString("id")
-                                    .ifBlank {
-                                        "song-$i-${q.hashCode()}"
-                                    }
-
-                            val title =
-                                s.optString("title")
-                                    .ifBlank {
-                                        s.optString("name")
-                                    }
-                                    .ifBlank {
-                                        "Unknown Song"
-                                    }
-
-                            val artist =
-                                s.optString("artist")
-                                    .ifBlank {
-                                        "Unknown Artist"
-                                    }
-
-                            val image =
-                                s.optString("image")
-
-                            val stream =
-                                s.optString("stream")
-                                    .trim()
-
-                            if (stream.isBlank())
-                                continue
-
-                            val key =
-                                title.lowercase()
-                                    .replace(
-                                        Regex("[^a-z0-9]"),
-                                        ""
-                                    )
-
-                            if (key.isBlank() ||
-                                !seen.add(key)
-                            ) continue
-
-                            output += Track(
-                                id = id,
-                                name = title,
-                                artist = artist,
-                                image = image,
-                                play = stream,
-                                provider = "Streamify",
-                                raw = s.toString()
-                            )
-                        }
+                    if (t.play.isNotBlank() && seen.add(key)) {
+                        all += t
                     }
-
-            } catch (_: Exception) {
-                // Try the next page/fallback automatically.
+                }
             }
-
-            if (output.size >= 20)
-                break
         }
 
-        output
+        if (all.isEmpty()) {
+
+            for (page in startPage until startPage + pages) {
+
+                val body = request(
+                    "$APPDEPLOY/api/search?q=$encoded&page=$page"
+                )
+
+                if (!body.isNullOrBlank()) {
+                    runCatching {
+                        parseAppDeploy(body)
+                    }.getOrDefault(emptyList()).forEach { t ->
+
+                        val key =
+                            "${t.name.lowercase()}|${t.artist.lowercase()}"
+
+                        if (t.play.isNotBlank() && seen.add(key)) {
+                            all += t
+                        }
+                    }
+                }
+            }
+        }
+
+        all.take(60)
     }
 }

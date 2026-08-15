@@ -11,8 +11,8 @@ android {
         applicationId = "com.aman.streamify"
         minSdk = 26
         targetSdk = 35
-        versionCode = 7
-        versionName = "9.0"
+        versionCode = 8
+        versionName = "10.0"
     }
 
     compileOptions {

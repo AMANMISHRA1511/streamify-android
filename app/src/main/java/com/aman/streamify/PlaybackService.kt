@@ -5,6 +5,8 @@ import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
+import androidx.media3.common.PlaybackException
+import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
@@ -12,62 +14,94 @@ import androidx.media3.session.MediaSessionService
 class PlaybackService : MediaSessionService() {
 
     private var player: ExoPlayer? = null
-    private var mediaSession: MediaSession? = null
+    private var session: MediaSession? = null
 
     override fun onCreate() {
         super.onCreate()
 
-        val exo = ExoPlayer.Builder(this).build().apply {
-            setAudioAttributes(AudioAttributes.DEFAULT, true)
-            setHandleAudioBecomingNoisy(true)
-            setWakeMode(C.WAKE_MODE_NETWORK)
-            repeatMode = ExoPlayer.REPEAT_MODE_OFF
-        }
+        val exo = ExoPlayer.Builder(this)
+            .build()
+            .apply {
 
-        val intent = packageManager.getLaunchIntentForPackage(packageName)
+                setAudioAttributes(
+                    AudioAttributes.DEFAULT,
+                    true
+                )
 
-        val pendingIntent = PendingIntent.getActivity(
-            this,
-            0,
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
+                setHandleAudioBecomingNoisy(true)
+                setWakeMode(C.WAKE_MODE_NETWORK)
+                repeatMode = Player.REPEAT_MODE_OFF
+
+                addListener(
+                    object : Player.Listener {
+
+                        override fun onPlayerError(
+                            error: PlaybackException
+                        ) {
+
+                            if (hasNextMediaItem()) {
+                                seekToNextMediaItem()
+                                prepare()
+                                play()
+                            }
+                        }
+                    }
+                )
+            }
+
+        val launchIntent =
+            packageManager.getLaunchIntentForPackage(packageName)
+
+        val pendingIntent =
+            PendingIntent.getActivity(
+                this,
+                0,
+                launchIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or
+                    PendingIntent.FLAG_IMMUTABLE
+            )
 
         player = exo
 
-        mediaSession = MediaSession.Builder(this, exo)
-            .setSessionActivity(pendingIntent)
-            .build()
+        session =
+            MediaSession.Builder(this, exo)
+                .setSessionActivity(pendingIntent)
+                .build()
     }
 
     override fun onGetSession(
         controllerInfo: MediaSession.ControllerInfo
-    ): MediaSession? = mediaSession
+    ): MediaSession? = session
 
     override fun onDestroy() {
-        mediaSession?.release()
+        session?.release()
         player?.release()
-        mediaSession = null
+        session = null
         player = null
         super.onDestroy()
     }
 
     companion object {
-        fun mediaItem(track: Track): MediaItem {
-            val metadata = MediaMetadata.Builder()
-                .setTitle(track.name)
-                .setArtist(track.artist)
-                .setAlbumTitle(track.provider)
-                .apply {
-                    if (track.image.isNotBlank()) {
-                        setArtworkUri(android.net.Uri.parse(track.image))
+
+        fun mediaItem(t: Track): MediaItem {
+
+            val metadata =
+                MediaMetadata.Builder()
+                    .setTitle(t.name)
+                    .setArtist(t.artist)
+                    .setAlbumTitle(t.album)
+                    .apply {
+                        if (t.image.isNotBlank()) {
+                            setArtworkUri(
+                                android.net.Uri.parse(t.image)
+                            )
+                        }
                     }
-                }
-                .build()
+                    .build()
 
             return MediaItem.Builder()
-                .setMediaId("${track.provider}:${track.id}")
-                .setUri(track.play)
+                .setMediaId(t.id)
+                .setUri(t.play)
                 .setMediaMetadata(metadata)
                 .build()
         }

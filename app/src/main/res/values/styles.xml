@@ -1,11 +1,16 @@
 <resources>
-    <style name="Theme.Streamify" parent="Theme.Material3.DayNight.NoActionBar">
+
+    <style
+        name="Theme.Streamify"
+        parent="Theme.Material3.DayNight.NoActionBar">
+
         <item name="android:fontFamily">sans</item>
         <item name="android:windowLightStatusBar">false</item>
-        <item name="android:statusBarColor">#080B10</item>
-        <item name="android:navigationBarColor">#080B10</item>
-        <item name="android:windowActionModeOverlay">true</item>
-        <item name="colorPrimary">#7CFF00</item>
-        <item name="colorSecondary">#7CFF00</item>
+        <item name="android:statusBarColor">#050506</item>
+        <item name="android:navigationBarColor">#050506</item>
+        <item name="colorPrimary">#E51BEA</item>
+        <item name="colorSecondary">#7438FF</item>
+
     </style>
+
 </resources>

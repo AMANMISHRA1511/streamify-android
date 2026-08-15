@@ -3,6 +3,7 @@ package com.aman.streamify
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.util.Patterns
 import android.view.Gravity
@@ -15,61 +16,57 @@ class LoginActivity : ComponentActivity() {
 
     private val prefs by lazy {
         getSharedPreferences(
-            "streamify_auth",
+            "streamify_native_auth_v10",
             Context.MODE_PRIVATE
         )
     }
 
     private lateinit var email: EditText
     private lateinit var password: EditText
-    private lateinit var heading: TextView
+    private lateinit var title: TextView
     private lateinit var subtitle: TextView
     private lateinit var action: Button
-    private lateinit var toggle: TextView
+    private lateinit var switch: TextView
 
-    private var creating = false
+    private var create = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        if (prefs.getBoolean("logged_in", false)) {
-            openStreamify()
+        if (prefs.getBoolean("logged", false)) {
+            openApp()
             return
         }
+
+        window.statusBarColor =
+            Color.parseColor("#050506")
+
+        window.navigationBarColor =
+            Color.parseColor("#050506")
 
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER
-            setPadding(42, 60, 42, 60)
-            setBackgroundColor(
-                Color.parseColor("#050506")
-            )
+            setPadding(dp(28), dp(45), dp(28), dp(35))
+            setBackgroundColor(Color.parseColor("#050506"))
         }
 
         val logo = ImageView(this).apply {
-            setImageResource(
-                resources.getIdentifier(
-                    "streamify_logo",
-                    "drawable",
-                    packageName
-                )
-            )
-            scaleType =
-                ImageView.ScaleType.CENTER_INSIDE
+            setImageResource(R.mipmap.ic_launcher)
         }
 
         root.addView(
             logo,
             LinearLayout.LayoutParams(
-                220,
-                220
+                dp(100),
+                dp(100)
             )
         )
 
         root.addView(
             TextView(this).apply {
                 text = "STREAMIFY"
-                textSize = 32f
+                textSize = 28f
                 gravity = Gravity.CENTER
                 setTextColor(Color.WHITE)
                 setTypeface(
@@ -79,85 +76,61 @@ class LoginActivity : ComponentActivity() {
             }
         )
 
-        heading = TextView(this).apply {
-            textSize = 28f
+        title = TextView(this).apply {
+            textSize = 30f
             setTextColor(Color.WHITE)
             setTypeface(
                 typeface,
                 android.graphics.Typeface.BOLD
             )
-            setPadding(0, 70, 0, 8)
+            setPadding(0, dp(45), 0, dp(6))
         }
 
         subtitle = TextView(this).apply {
-            textSize = 15f
-            setTextColor(
-                Color.parseColor("#9999A6")
-            )
-            setPadding(0, 0, 0, 25)
+            textSize = 14f
+            setTextColor(Color.parseColor("#92909A"))
+            setPadding(0, 0, 0, dp(22))
         }
 
-        email = EditText(this).apply {
-            hint = "Email address"
-            inputType =
-                android.text.InputType.TYPE_CLASS_TEXT or
-                android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
-
-            setTextColor(Color.WHITE)
-            setHintTextColor(
-                Color.parseColor("#777780")
-            )
-            setPadding(30, 0, 30, 0)
-            setBackgroundColor(
-                Color.parseColor("#15151C")
-            )
-        }
-
-        password = EditText(this).apply {
-            hint = "Password"
-
+        email = input("Email address")
+        password = input("Password").apply {
             inputType =
                 android.text.InputType.TYPE_CLASS_TEXT or
                 android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
-
-            setTextColor(Color.WHITE)
-            setHintTextColor(
-                Color.parseColor("#777780")
-            )
-
-            setPadding(30, 0, 30, 0)
-
-            setBackgroundColor(
-                Color.parseColor("#15151C")
-            )
         }
 
         action = Button(this).apply {
-            setTextColor(Color.WHITE)
-            setBackgroundColor(
-                Color.parseColor("#D91AFF")
-            )
             isAllCaps = false
             textSize = 17f
+            setTextColor(Color.WHITE)
+
+            background =
+                GradientDrawable(
+                    GradientDrawable.Orientation.LEFT_RIGHT,
+                    intArrayOf(
+                        Color.parseColor("#E51BEA"),
+                        Color.parseColor("#7438FF")
+                    )
+                ).apply {
+                    cornerRadius = dp(30).toFloat()
+                }
         }
 
-        toggle = TextView(this).apply {
+        switch = TextView(this).apply {
             gravity = Gravity.CENTER
-            setTextColor(
-                Color.parseColor("#E83CFF")
-            )
             textSize = 15f
-            setPadding(0, 25, 0, 20)
+            setTextColor(Color.parseColor("#E53FFF"))
+            setPadding(0, dp(20), 0, dp(20))
         }
 
-        root.addView(heading)
+        root.addView(title)
         root.addView(subtitle)
 
         root.addView(
             email,
             LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                120
+                dp(58)
             )
         )
 
@@ -165,9 +138,9 @@ class LoginActivity : ComponentActivity() {
             password,
             LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                120
+                dp(58)
             ).apply {
-                topMargin = 20
+                topMargin = dp(12)
             }
         )
 
@@ -175,21 +148,21 @@ class LoginActivity : ComponentActivity() {
             action,
             LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                120
+                dp(58)
             ).apply {
-                topMargin = 30
+                topMargin = dp(22)
             }
         )
 
-        root.addView(toggle)
+        root.addView(switch)
 
         setContentView(root)
 
-        renderMode()
+        render()
 
-        toggle.setOnClickListener {
-            creating = !creating
-            renderMode()
+        switch.setOnClickListener {
+            create = !create
+            render()
         }
 
         action.setOnClickListener {
@@ -197,21 +170,39 @@ class LoginActivity : ComponentActivity() {
         }
     }
 
-    private fun renderMode() {
+    private fun input(hintText: String) =
+        EditText(this).apply {
 
-        if (creating) {
-            heading.text = "Create account"
+            hint = hintText
+            textSize = 16f
+            setTextColor(Color.WHITE)
+            setHintTextColor(Color.parseColor("#77747E"))
+            setPadding(dp(18), 0, dp(18), 0)
+
+            background = GradientDrawable().apply {
+                setColor(Color.parseColor("#15141B"))
+                setStroke(
+                    dp(1),
+                    Color.parseColor("#30283A")
+                )
+                cornerRadius = dp(16).toFloat()
+            }
+        }
+
+    private fun render() {
+        if (create) {
+            title.text = "Create account"
             subtitle.text =
                 "Create your Streamify account"
             action.text = "Create Account"
-            toggle.text =
+            switch.text =
                 "Already have an account? Login"
         } else {
-            heading.text = "Welcome back"
+            title.text = "Welcome back"
             subtitle.text =
                 "Login to continue listening"
             action.text = "Login"
-            toggle.text =
+            switch.text =
                 "New to Streamify? Create Account"
         }
     }
@@ -230,8 +221,7 @@ class LoginActivity : ComponentActivity() {
                 .matcher(mail)
                 .matches()
         ) {
-            email.error =
-                "Enter a valid email"
+            email.error = "Enter valid email"
             return
         }
 
@@ -241,73 +231,51 @@ class LoginActivity : ComponentActivity() {
             return
         }
 
-        val hashed =
-            hash("$mail:$pass")
+        val hashed = hash("$mail:$pass")
 
-        if (creating) {
+        if (create) {
 
             prefs.edit()
                 .putString("email", mail)
-                .putString(
-                    "password_hash",
-                    hashed
-                )
-                .putBoolean(
-                    "logged_in",
-                    true
-                )
+                .putString("pass", hashed)
+                .putBoolean("logged", true)
                 .apply()
 
-            openStreamify()
+            openApp()
 
         } else {
 
-            val savedMail =
-                prefs.getString(
-                    "email",
-                    null
-                )
-
-            val savedPassword =
-                prefs.getString(
-                    "password_hash",
-                    null
-                )
-
             if (
-                savedMail == mail &&
-                savedPassword == hashed
+                prefs.getString("email", "") == mail &&
+                prefs.getString("pass", "") == hashed
             ) {
 
                 prefs.edit()
-                    .putBoolean(
-                        "logged_in",
-                        true
-                    )
+                    .putBoolean("logged", true)
                     .apply()
 
-                openStreamify()
+                openApp()
 
             } else {
 
                 Toast.makeText(
                     this,
-                    "Incorrect email or password",
+                    "Wrong login. Create account first.",
                     Toast.LENGTH_SHORT
                 ).show()
             }
         }
     }
 
-    private fun hash(v: String): String =
+    private fun hash(s: String): String =
         MessageDigest
             .getInstance("SHA-256")
-            .digest(v.toByteArray())
+            .digest(s.toByteArray())
             .joinToString("") {
                 "%02x".format(it)
             }
 
-    private fun openStreamify() {
+    private fun openApp() {
         startActivity(
             Intent(
                 this,
@@ -316,4 +284,7 @@ class LoginActivity : ComponentActivity() {
         )
         finish()
     }
+
+    private fun dp(v: Int) =
+        (v * resources.displayMetrics.density).toInt()
 }
