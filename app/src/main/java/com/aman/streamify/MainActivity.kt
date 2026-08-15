@@ -519,7 +519,7 @@ class MainActivity : ComponentActivity() {
         val input = EditText(this).apply {
             hint = "Search song, singer or album"
             textSize = 17f
-            singleLine = true
+            setSingleLine(true)
             setTextColor(Color.WHITE)
             setHintTextColor(Color.parseColor("#77747F"))
             setPadding(dp(18), 0, dp(18), 0)
